@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบรายงานปฐมพยาบาล - อะเมซิ่ง กำแพงเพชร มาราธอน ครั้งที่ 4</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Dashboard Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts (Sarabun) -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .tab-active {
+            border-bottom: 4px solid #059669;
+            color: #059669;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Banner -->
+    <header class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="bg-white p-2.5 rounded-full text-emerald-600 shadow-inner">
+                    <i class="fa-solid fa-house-medical-flag text-3xl"></i>
+                </div>
+                <div>
+                    <span class="bg-emerald-500 text-xs px-2.5 py-1 rounded-full font-semibold tracking-wider uppercase">ระบบปฐมพยาบาลอัจฉริยะ v1.0</span>
+                    <h1 class="text-2xl sm:text-3xl font-bold mt-1">อะเมซิ่ง กำแพงเพชร มาราธอน ครั้งที่ 4 ประจำปี 2569</h1>
+                    <p class="text-emerald-100 text-sm mt-0.5">ระบบกรอกรายงานและแดชบอร์ดวิเคราะห์ข้อมูลแบบเรียลไทม์สำหรับเจ้าหน้าที่</p>
+                </div>
+            </div>
+            <!-- Live Clock -->
+            <div class="bg-emerald-800/40 px-4 py-2 rounded-lg border border-emerald-500/30 text-center md:text-right">
+                <span class="text-xs text-emerald-200 block">เวลาปัจจุบัน (เวลาประเทศไทย)</span>
+                <span id="live-clock" class="font-mono text-lg font-bold">--:--:--</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-around sm:justify-start space-x-8">
+                <button onclick="switchTab('form-tab', 'form-section')" id="form-tab" class="py-4 px-2 font-medium text-lg flex items-center gap-2 tab-active transition-all focus:outline-none">
+                    <i class="fa-solid fa-clipboard-list text-emerald-600"></i>
+                    <span>ส่งรายงานปฐมพยาบาล</span>
+                </button>
+                <button onclick="switchTab('dashboard-tab', 'dashboard-section')" id="dashboard-tab" class="py-4 px-2 font-medium text-lg flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-all focus:outline-none">
+                    <i class="fa-solid fa-chart-line text-emerald-600"></i>
+                    <span>แดชบอร์ดเรียลไทม์</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Alerts Notification Area -->
+        <div id="alert-box" class="hidden mb-6 p-4 rounded-lg flex items-center justify-between transition-all duration-300">
+            <div class="flex items-center gap-3">
+                <span id="alert-icon" class="text-xl"></span>
+                <span id="alert-text" class="font-medium"></span>
+            </div>
+            <button onclick="closeAlert()" class="text-gray-500 hover:text-gray-700">
+                <i class="fa-solid fa-xmark"></i>
+            </</button>
+        </div>
+
+        <!-- ==================== SECTION 1: FORM SECTION ==================== -->
+        <section id="form-section" class="block space-y-6">
+            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4 text-white">
+                    <h2 class="text-xl font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-file-medical-text"></i>
+                        ฟอร์มบันทึกข้อมูลการปฏิบัติงานหน่วยปฐมพยาบาล
+                    </h2>
+                    <p class="text-xs text-emerald-100 mt-1">โปรดบันทึกข้อมูลตามความเป็นจริงเมื่อเกิดเหตุการณ์หรือสิ้นสุดช่วงเวลาปฏิบัติงาน</p>
+                </div>
+                
+                <form id="medical-report-form" onsubmit="handleFormSubmit(event)" class="p-6 sm:p-8 space-y-6">
+                    
+                    <!-- 1. Location Selection -->
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-map-location-dot text-emerald-600"></i>
+                            จุดบริการหน่วยปฐมพยาบาล <span class="text-red-500">*</span>
+                        </label>
+                        <select id="location" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-white text-gray-800">
+                            <option value="" disabled selected>-- เลือกจุดบริการที่ท่านปฏิบัติหน้าที่ --</option>
+                            <option value="จุดกลับตัวนักวิ่ง เลย รพ.สต.หนองกรด">1.1 จุดกลับตัวนักวิ่ง เลย รพ.สต.หนองกรด</option>
+                            <option value="สามแยกสำนักงานส่งเสริมการเรียนรู้ประจำจังหวัดกำแพงเพชร (สามแยก กศน.)">1.2 สามแยกสำนักงานส่งเสริมการเรียนรู้ประจำจังหวัดกำแพงเพชร (สามแยก กศน.)</option>
+                            <option value="หน้าเทศบาลเมืองกำแพงเพชร">1.3 หน้าเทศบาลเมืองกำแพงเพชร</option>
+                            <option value="สามแยก Scenic Riverside Resort">1.4 สามแยก Scenic Riverside Resort</option>
+                            <option value="หน้าหมู่บ้านชากังราว พาร์ควิลล์">1.5 หน้าหมู่บ้านชากังราว พาร์ควิลล์</option>
+                            <option value="วัดริมทาง อุทยานฯ">1.6 วัดริมทาง อุทยานฯ</option>
+                        </select>
+                    </div>
+
+                    <!-- 2 & 4. Statistics -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-users text-emerald-600"></i>
+                                จำนวนผู้รับบริการทั้งหมดในครั้งนี้ (คน) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" id="total-patients" min="0" required placeholder="ระบุจำนวนคน (จะคำนวณอัตโนมัติจากรายการด้านล่างได้)" 
+                                   class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                            <p class="text-xs text-gray-400 mt-1">ระบุจำนวนคนรวมทั้งหมดที่เข้ามารับบริการ ณ จุดของท่านในรอบการรายงานนี้</p>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-truck-medical text-emerald-600"></i>
+                                ส่งต่อผู้ป่วยไปโรงพยาบาล (คน) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" id="referred-patients" min="0" required placeholder="ระบุจำนวนคน (ถ้าไม่มีให้ใส่ 0)" 
+                                   class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                            <p class="text-xs text-gray-400 mt-1">จำนวนผู้ป่วยที่มีอาการรุนแรงและต้องส่งตัวรักษาต่อโรงพยาบาล</p>
+                        </div>
+                    </div>
+
+                    <!-- 3. Dynamic Patient Cases (Gender & Symptoms) -->
+                    <div class="bg-gray-50 p-4 sm:p-6 rounded-2xl border border-gray-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h3 class="text-gray-800 font-semibold text-lg flex items-center gap-2">
+                                    <i class="fa-solid fa-user-injured text-emerald-600"></i>
+                                    รายละเอียดอาการของผู้มารับบริการแต่ละคน
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-0.5">ระบุเพศและอาการเจ็บป่วยของผู้ป่วยเพื่อบันทึกสถิติรายบุคคล</p>
+                            </div>
+                            <button type="button" onclick="addPatientRow()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-all">
+                                <i class="fa-solid fa-plus"></i> เพิ่มรายชื่อคนไข้
+                            </button>
+                        </div>
+
+                        <!-- Patient List Rows container -->
+                        <div id="patient-rows-container" class="space-y-4">
+                            <!-- Dynamic Row will be inserted here -->
+                        </div>
+
+                        <div id="no-patients-placeholder" class="text-center py-6 text-gray-400">
+                            <i class="fa-solid fa-users-slash text-3xl mb-2"></i>
+                            <p class="text-sm">ยังไม่มีการเพิ่มรายการรายละเอียดผู้ป่วยรายบุคคล กดปุ่ม "เพิ่มรายชื่อคนไข้" ด้านบน</p>
+                        </div>
+                    </div>
+
+                    <!-- 5 & 6. Reporter Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-user-doctor text-emerald-600"></i>
+                                ชื่อผู้รายงาน <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="reporter-name" required placeholder="ระบุ ชื่อ - นามสกุล" 
+                                   class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-building-shield text-emerald-600"></i>
+                                หน่วยงานสังกัด <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="reporter-agency" required placeholder="เช่น รพ.กำแพงเพชร / กู้ภัยสว่างฯ" 
+                                   class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                        </div>
+                    </div>
+
+                    <!-- 7. Image Upload Component -->
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-camera text-emerald-600"></i>
+                            แนบรูปภาพประกอบการปฏิบัติหน้าที่ <span class="text-xs text-gray-400">(สูงสุด 2 รูป)</span>
+                        </label>
+                        <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-6 bg-gray-50 hover:bg-emerald-50/20 transition-all cursor-pointer" onclick="triggerImageUpload()">
+                            <input type="file" id="image-upload" accept="image/*" multiple class="hidden" onchange="previewImages(event)">
+                            <i class="fa-solid fa-cloud-arrow-up text-4xl text-gray-400 mb-2"></i>
+                            <span class="text-sm text-gray-600 font-medium">คลิกเพื่อเลือกรูปภาพจากสมาร์ทโฟนหรือคอมพิวเตอร์ของคุณ</span>
+                            <span class="text-xs text-gray-400 mt-1">ไฟล์ JPEG, PNG ขนาดไม่เกิน 5MB</span>
+                        </div>
+                        <!-- Images Preview Area -->
+                        <div id="image-preview-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 hidden">
+                            <!-- Image previews will show here -->
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-4 justify-end">
+                        <button type="button" onclick="resetForm()" class="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-all">
+                            ล้างข้อมูล
+                        </button>
+                        <button type="submit" class="px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> ส่งรายงานข้อมูลแบบเรียลไทม์
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== SECTION 2: DASHBOARD SECTION ==================== -->
+        <section id="dashboard-section" class="hidden space-y-6">
+            
+            <!-- Quick Analytics Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Card 1: Total Patients -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-gray-400 text-sm font-semibold">ผู้รับบริการสะสมทั้งหมด</span>
+                        <h3 id="dash-total-patients" class="text-3xl font-extrabold text-gray-800 mt-1">0</h3>
+                        <span class="text-xs text-emerald-600 mt-1 block font-medium"><i class="fa-solid fa-clock-rotate-left"></i> อัปเดตสดแบบเรียลไทม์</span>
+                    </div>
+                    <div class="bg-emerald-100 p-4 rounded-xl text-emerald-600">
+                        <i class="fa-solid fa-hospital-user text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Card 2: Total Referrals -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-gray-400 text-sm font-semibold">ส่งต่อโรงพยาบาล</span>
+                        <h3 id="dash-total-referrals" class="text-3xl font-extrabold text-red-600 mt-1">0</h3>
+                        <span class="text-xs text-gray-500 mt-1 block">เคสวิกฤตที่ต้องส่งตัวด่วน</span>
+                    </div>
+                    <div class="bg-red-100 p-4 rounded-xl text-red-600">
+                        <i class="fa-solid fa-truck-medical text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Card 3: Gender Distribution -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-gray-400 text-sm font-semibold">แยกสัดส่วน ชาย / หญิง</span>
+                        <h3 id="dash-gender-ratio" class="text-2xl font-bold text-gray-800 mt-1">0 / 0</h3>
+                        <span class="text-xs text-gray-500 mt-1 block">อัตราผู้ป่วยจำแนกตามเพศ</span>
+                    </div>
+                    <div class="bg-blue-100 p-4 rounded-xl text-blue-600">
+                        <i class="fa-solid fa-venus-mars text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Card 4: Total Reports Submitted -->
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-gray-400 text-sm font-semibold">รายงานที่ส่งเข้ามาแล้ว</span>
+                        <h3 id="dash-reports-count" class="text-3xl font-extrabold text-amber-600 mt-1">0</h3>
+                        <span class="text-xs text-gray-500 mt-1 block">จำนวนครั้งการส่งจากทุกจุด</span>
+                    </div>
+                    <div class="bg-amber-100 p-4 rounded-xl text-amber-600">
+                        <i class="fa-solid fa-file-invoice text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts & Visual Analytics Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Chart 1: Patients by Location -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-4 border-b pb-3 border-gray-100">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar text-emerald-600"></i>
+                            จำนวนผู้ป่วยสะสมแยกตามจุดบริการ
+                        </h3>
+                    </div>
+                    <div class="relative h-64 sm:h-80 w-full flex items-center justify-center">
+                        <canvas id="chart-location"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Common Symptoms -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-4 border-b pb-3 border-gray-100">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-emerald-600"></i>
+                            อาการและโรคที่พบมากที่สุด (%)
+                        </h3>
+                    </div>
+                    <div class="relative h-64 sm:h-80 w-full flex items-center justify-center">
+                        <canvas id="chart-symptoms"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Case Reports Table (The Real-time Log) -->
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i>
+                            บันทึกรายการปฏิบัติหน้าที่ล่าสุดแบบเรียลไทม์
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-0.5">รายการข้อมูลส่งมาจากหน่วยงานสนามทั้งหมด</p>
+                    </div>
+                    <!-- Refresh & Reset Fake Button for demo -->
+                    <div class="flex items-center gap-2 self-stretch sm:self-auto">
+                        <button onclick="mockInitialData()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1">
+                            <i class="fa-solid fa-database"></i> โหลดข้อมูลตัวอย่างจำลอง
+                        </button>
+                        <button onclick="clearAllData()" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i> เคลียร์ข้อมูลทั้งหมด
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
+                                <th class="p-4">เวลาส่งรายงาน</th>
+                                <th class="p-4">จุดบริการ</th>
+                                <th class="p-4 text-center">ผู้รับบริการ (คน)</th>
+                                <th class="p-4 text-center">ส่งต่อ รพ. (คน)</th>
+                                <th class="p-4">รายละเอียดผู้ป่วย (เพศ/อาการ)</th>
+                                <th class="p-4">ผู้รายงาน / หน่วยงาน</th>
+                                <th class="p-4 text-center">รูปแนบ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reports-table-body" class="divide-y divide-gray-100 text-sm text-gray-700">
+                            <!-- Table rows will populate dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="no-data-placeholder" class="text-center py-12 text-gray-400 hidden">
+                    <i class="fa-solid fa-inbox text-4xl mb-3"></i>
+                    <p class="text-base font-medium">ยังไม่มีข้อมูลรายงานส่งเข้ามา</p>
+                    <p class="text-xs mt-1">คุณสามารถไปที่หน้าแท็บ "ส่งรายงานปฐมพยาบาล" เพื่อบันทึกข้อมูลแรกได้ทันที</p>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-400 text-center py-6 border-t border-gray-700 mt-12 text-xs">
+        <div class="max-w-7xl mx-auto px-4 space-y-2">
+            <p>© 2569 อะเมซิ่ง กำแพงเพชร มาราธอน ครั้งที่ 4 | ระบบสารสนเทศการกู้ชีพ-กู้ภัยและบริการแพทย์ฉุกเฉิน</p>
+            <p>ออกแบบระบบตามหลัก UX/UI เพื่อการเข้าถึงง่ายบนโทรศัพท์มือถือที่อยู่ตามสนามแข่งขัน</p>
+        </div>
+    </footer>
+
+    <!-- Patient Details Modal popup (To view full details) -->
+    <div id="details-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto shadow-2xl border border-gray-200">
+            <div class="bg-emerald-600 p-4 text-white flex justify-between items-center rounded-t-2xl">
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open"></i> รายละเอียดข้อมูลผู้รับบริการ
+                </h3>
+                <button onclick="closeModal()" class="text-white hover:text-gray-200 focus:outline-none">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div id="modal-content" class="p-6 space-y-4">
+                <!-- Content injected dynamically -->
+            </div>
+            <div class="p-4 border-t border-gray-100 flex justify-end">
+                <button onclick="closeModal()" class="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl font-semibold transition-all">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Blocks logic -->
+    <script>
+        // Database State
+        let reports = [];
+        let patientCounter = 0;
+        let attachedImages = [];
+        let chartInstanceLocation = null;
+        let chartInstanceSymptoms = null;
+
+        // On Load Initialization
+        window.onload = function() {
+            // Live clock start
+            setInterval(updateClock, 1000);
+            updateClock();
+            
+            // Load DB from LocalStorage if exists
+            const savedReports = localStorage.getItem('km_marathon_reports');
+            if (savedReports) {
+                reports = JSON.parse(savedReports);
+            } else {
+                // Pre-fill some simulated reports for visual excellence on first load
+                loadDemoData();
+            }
+
+            // Render Dashboard & Table
+            updateDashboard();
+            
+            // Add initial empty patient row in form
+            addPatientRow();
+        };
+
+        // Live Clock
+        function updateClock() {
+            const options = { 
+                timeZone: 'Asia/Bangkok', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false 
+            };
+            const formatter = new Intl.DateTimeFormat('th-TH', options);
+            document.getElementById('live-clock').innerText = formatter.format(new Date()) + ' น.';
+        }
+
+        // Switch View Tabs
+        function switchTab(tabId, sectionId) {
+            // reset status
+            ['form-tab', 'dashboard-tab'].forEach(id => {
+                document.getElementById(id).className = "py-4 px-2 font-medium text-lg flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-all focus:outline-none";
+            });
+            ['form-section', 'dashboard-section'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(id).classList.remove('block');
+            });
+
+            // Set active
+            document.getElementById(tabId).className = "py-4 px-2 font-medium text-lg flex items-center gap-2 tab-active transition-all focus:outline-none";
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.getElementById(sectionId).classList.add('block');
+
+            if(sectionId === 'dashboard-section') {
+                updateDashboard();
+            }
+        }
+
+        // Add Patient Form Row (Symptom & Gender)
+        function addPatientRow() {
+            patientCounter++;
+            const container = document.getElementById('patient-rows-container');
+            document.getElementById('no-patients-placeholder').classList.add('hidden');
+
+            const row = document.createElement('div');
+            row.id = `patient-row-${patientCounter}`;
+            row.className = "flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3.5 bg-white border border-gray-200 rounded-xl relative group shadow-sm transition-all hover:border-emerald-200";
+            
+            row.innerHTML = `
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">
+                        คนที่ ${container.children.length + 1}
+                    </span>
+                </div>
+                <!-- Gender -->
+                <div class="w-full sm:w-1/4 shrink-0">
+                    <select class="patient-gender w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white" required>
+                        <option value="" disabled selected>-- เลือกเพศ --</option>
+                        <option value="ชาย">ชาย</option>
+                        <option value="หญิง">หญิง</option>
+                        <option value="ไม่ระบุ">ไม่ระบุ/อื่นๆ</option>
+                    </select>
+                </div>
+                <!-- Symptom details -->
+                <div class="w-full">
+                    <input type="text" placeholder="ระบุอาการ เช่น ตะคริวที่น่องซ้าย, หน้ามืด, แผลถลอกที่เข่า" class="patient-symptom w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-emerald-500" required>
+                </div>
+                <!-- Quick symptom tag picker -->
+                <div class="flex flex-wrap gap-1.5 w-full sm:w-auto">
+                    <button type="button" onclick="setQuickSymptom(${patientCounter}, 'ตะคริว')" class="text-[10px] bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 px-2 py-1 rounded">ตะคริว</button>
+                    <button type="button" onclick="setQuickSymptom(${patientCounter}, 'หน้ามืด')" class="text-[10px] bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 px-2 py-1 rounded">หน้ามืด</button>
+                    <button type="button" onclick="setQuickSymptom(${patientCounter}, 'แผลถลอก')" class="text-[10px] bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 px-2 py-1 rounded">แผลถลอก</button>
+                </div>
+                <!-- Delete row button -->
+                <button type="button" onclick="removePatientRow(${patientCounter})" class="text-gray-400 hover:text-red-500 sm:absolute sm:-right-2 sm:-top-2 sm:bg-white sm:border sm:border-gray-200 sm:rounded-full sm:p-1 sm:shadow-md transition-all">
+                    <i class="fa-solid fa-circle-xmark text-lg"></i>
+                </button>
+            `;
+            container.appendChild(row);
+            autoCalculateTotalPatients();
+        }
+
+        // Set Quick Symptom Text
+        function setQuickSymptom(rowNum, symptomName) {
+            const row = document.getElementById(`patient-row-${rowNum}`);
+            if (row) {
+                row.querySelector('.patient-symptom').value = symptomName;
+            }
+        }
+
+        // Remove Patient Row
+        function removePatientRow(rowNum) {
+            const row = document.getElementById(`patient-row-${rowNum}`);
+            if (row) {
+                row.remove();
+                // Re-index tags
+                const container = document.getElementById('patient-rows-container');
+                Array.from(container.children).forEach((child, index) => {
+                    const badge = child.querySelector('.bg-emerald-100');
+                    if(badge) badge.innerText = `คนที่ ${index + 1}`;
+                });
+                
+                if (container.children.length === 0) {
+                    document.getElementById('no-patients-placeholder').classList.remove('hidden');
+                }
+                autoCalculateTotalPatients();
+            }
+        }
+
+        // Auto count patients and put in Total field
+        function autoCalculateTotalPatients() {
+            const count = document.getElementById('patient-rows-container').children.length;
+            if (count > 0) {
+                document.getElementById('total-patients').value = count;
+            }
+        }
+
+        // Fake image attachment preview
+        function triggerImageUpload() {
+            document.getElementById('image-upload').click();
+        }
+
+        function previewImages(event) {
+            const files = event.target.files;
+            const previewContainer = document.getElementById('image-preview-container');
+            
+            if (files.length > 0) {
+                previewContainer.innerHTML = '';
+                previewContainer.classList.remove('hidden');
+                attachedImages = [];
+
+                // Load each selected image as Base64 to save in storage simulation
+                Array.from(files).slice(0, 2).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        attachedImages.push(e.target.result);
+                        
+                        const div = document.createElement('div');
+                        div.className = "relative rounded-xl overflow-hidden shadow-md aspect-video bg-gray-100 border border-gray-200";
+                        div.innerHTML = `
+                            <img src="${e.target.result}" class="w-full h-full object-cover">
+                            <span class="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">รูปที่ ${index+1}</span>
+                            <button type="button" onclick="removeImage(${index})" class="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        `;
+                        previewContainer.appendChild(div);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+
+        function removeImage(index) {
+            attachedImages.splice(index, 1);
+            const previewContainer = document.getElementById('image-preview-container');
+            
+            if (attachedImages.length === 0) {
+                previewContainer.classList.add('hidden');
+            } else {
+                // Re-render
+                previewContainer.innerHTML = '';
+                attachedImages.forEach((imgData, i) => {
+                    const div = document.createElement('div');
+                    div.className = "relative rounded-xl overflow-hidden shadow-md aspect-video bg-gray-100 border border-gray-200";
+                    div.innerHTML = `
+                        <img src="${imgData}" class="w-full h-full object-cover">
+                        <span class="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">รูปที่ ${i+1}</span>
+                        <button type="button" onclick="removeImage(${i})" class="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    `;
+                    previewContainer.appendChild(div);
+                });
+            }
+        }
+
+        // Clear Form fields
+        function resetForm() {
+            document.getElementById('medical-report-form').reset();
+            document.getElementById('patient-rows-container').innerHTML = '';
+            document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('image-preview-container').innerHTML = '';
+            document.getElementById('no-patients-placeholder').classList.remove('hidden');
+            attachedImages = [];
+            addPatientRow();
+        }
+
+        // Form Submit Handler
+        function handleFormSubmit(event) {
+            event.preventDefault();
+
+            // Prepare Individual Patients Array
+            const patientRows = document.getElementById('patient-rows-container').children;
+            const patientDetails = [];
+            
+            for(let i=0; i < patientRows.length; i++) {
+                const gender = patientRows[i].querySelector('.patient-gender').value;
+                const symptom = patientRows[i].querySelector('.patient-symptom').value;
+                if(gender && symptom) {
+                    patientDetails.push({ gender, symptom });
+                }
+            }
+
+            // Create report object
+            const newReport = {
+                id: 'REP-' + Date.now(),
+                timestamp: new Date().toISOString(),
+                location: document.getElementById('location').value,
+                totalPatients: parseInt(document.getElementById('total-patients').value) || 0,
+                referredPatients: parseInt(document.getElementById('referred-patients').value) || 0,
+                patients: patientDetails,
+                reporterName: document.getElementById('reporter-name').value,
+                reporterAgency: document.getElementById('reporter-agency').value,
+                images: [...attachedImages] // Save copy of uploaded bases64 images
+            };
+
+            // Insert into start of array
+            reports.unshift(newReport);
+
+            // Save to LocalStorage
+            localStorage.setItem('km_marathon_reports', JSON.stringify(reports));
+
+            // Show Success Notification
+            showAlert('success', `ส่งบันทึกเรียบร้อยแล้ว! จาก "${newReport.location}" ข้อมูลถูกอัปเดตไปยัง Dashboard ทันที`);
+
+            // Reset Form State
+            resetForm();
+
+            // Focus on top of screen and shift to Dashboard Tab
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => {
+                switchTab('dashboard-tab', 'dashboard-section');
+            }, 800);
+        }
+
+        // Render Dashboard Stats and Charts
+        function updateDashboard() {
+            // Check Data presence
+            const totalReports = reports.length;
+            document.getElementById('dash-reports-count').innerText = totalReports;
+
+            if (totalReports === 0) {
+                document.getElementById('dash-total-patients').innerText = '0';
+                document.getElementById('dash-total-referrals').innerText = '0';
+                document.getElementById('dash-gender-ratio').innerText = '0 / 0';
+                document.getElementById('no-data-placeholder').classList.remove('hidden');
+                document.getElementById('reports-table-body').innerHTML = '';
+                
+                // Clear charts
+                if (chartInstanceLocation) chartInstanceLocation.destroy();
+                if (chartInstanceSymptoms) chartInstanceSymptoms.destroy();
+                return;
+            }
+
+            document.getElementById('no-data-placeholder').classList.add('hidden');
+
+            // 1. Calculate Aggregated Data
+            let totalPatients = 0;
+            let totalReferrals = 0;
+            let maleCount = 0;
+            let femaleCount = 0;
+
+            const locationPatients = {
+                "จุดกลับตัวนักวิ่ง เลย รพ.สต.หนองกรด": 0,
+                "สามแยกสำนักงานส่งเสริมการเรียนรู้ประจำจังหวัดกำแพงเพชร (สามแยก กศน.)": 0,
+                "หน้าเทศบาลเมืองกำแพงเพชร": 0,
+                "สามแยก Scenic Riverside Resort": 0,
+                "หน้าหมู่บ้านชากังราว พาร์ควิลล์": 0,
+                "วัดริมทาง อุทยานฯ": 0
+            };
+
+            const symptomsFreq = {};
+
+            reports.forEach(rep => {
+                totalPatients += rep.totalPatients;
+                totalReferrals += rep.referredPatients;
+                
+                // Track location stats
+                if (locationPatients[rep.location] !== undefined) {
+                    locationPatients[rep.location] += rep.totalPatients;
+                } else {
+                    locationPatients[rep.location] = rep.totalPatients;
+                }
+
+                // Analyze detailed patients inside reports
+                rep.patients.forEach(pat => {
+                    // Gender counts
+                    if(pat.gender === 'ชาย') maleCount++;
+                    else if(pat.gender === 'หญิง') femaleCount++;
+
+                    // Simple Keyword Grouping for Symptoms
+                    const sym = pat.symptom.trim();
+                    let group = 'อื่นๆ';
+                    if (sym.includes('ตะคริว')) group = 'ตะคริว (Cramp)';
+                    else if (sym.includes('หน้ามืด') || sym.includes('เป็นลม') || sym.includes('เวียนหัว') || sym.includes('วิงเวียน')) group = 'หน้ามืด/เป็นลม (Faint)';
+                    else if (sym.includes('แผล') || sym.includes('ถลอก') || sym.includes('ฉีกขาด')) group = 'แผลถลอก/บาดเจ็บภายนอก';
+                    else if (sym.includes('ปวดกล้ามเนื้อ') || sym.includes('ตึง') || sym.includes('เดาะ')) group = 'ปวดกล้ามเนื้อ (Myalgia)';
+                    else if (sym.includes('แน่นหน้าอก') || sym.includes('หายใจไม่สะดวก') || sym.includes('หอบ')) group = 'แน่นหน้าอก/เหนื่อยหอบ';
+                    else if (sym.includes('กระหายน้ำ') || sym.includes('เพลียแดด') || sym.includes('ฮีทสโตรก')) group = 'เพลียแดด/ฮีทสโตรก';
+
+                    symptomsFreq[group] = (symptomsFreq[group] || 0) + 1;
+                });
+            });
+
+            // Set metric texts
+            document.getElementById('dash-total-patients').innerText = totalPatients;
+            document.getElementById('dash-total-referrals').innerText = totalReferrals;
+            document.getElementById('dash-gender-ratio').innerText = `ชาย ${maleCount} / หญิง ${femaleCount}`;
+
+            // 2. Render Location Chart (Bar Chart)
+            const ctxLocation = document.getElementById('chart-location').getContext('2d');
+            if (chartInstanceLocation) chartInstanceLocation.destroy();
+
+            // Simplified Labels for clean view
+            const simplifiedLabels = [
+                "จุดกลับตัว รพ.สต.หนองกรด",
+                "สามแยก กศน.",
+                "หน้าเทศบาลเมือง",
+                "สามแยก Scenic Resort",
+                "หมู่บ้านชากังราวฯ",
+                "วัดริมทาง อุทยานฯ"
+            ];
+            const locationKeys = [
+                "จุดกลับตัวนักวิ่ง เลย รพ.สต.หนองกรด",
+                "สามแยกสำนักงานส่งเสริมการเรียนรู้ประจำจังหวัดกำแพงเพชร (สามแยก กศน.)",
+                "หน้าเทศบาลเมืองกำแพงเพชร",
+                "สามแยก Scenic Riverside Resort",
+                "หน้าหมู่บ้านชากังราว พาร์ควิลล์",
+                "วัดริมทาง อุทยานฯ"
+            ];
+            const locationDataValues = locationKeys.map(key => locationPatients[key] || 0);
+
+            chartInstanceLocation = new Chart(ctxLocation, {
+                type: 'bar',
+                data: {
+                    labels: simplifiedLabels,
+                    datasets: [{
+                        label: 'ผู้ป่วยที่รับบริการ (คน)',
+                        data: locationDataValues,
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(100, 116, 139, 0.8)'
+                        ],
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        },
+                        x: {
+                            ticks: {
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 3. Render Symptoms Chart (Pie Chart)
+            const ctxSymptoms = document.getElementById('chart-symptoms').getContext('2d');
+            if (chartInstanceSymptoms) chartInstanceSymptoms.destroy();
+
+            const symptomLabels = Object.keys(symptomsFreq);
+            const symptomData = Object.values(symptomsFreq);
+
+            chartInstanceSymptoms = new Chart(ctxSymptoms, {
+                type: 'doughnut',
+                data: {
+                    labels: symptomLabels.length ? symptomLabels : ["ยังไม่มีข้อมูลอาการ"],
+                    datasets: [{
+                        data: symptomData.length ? symptomData : [1],
+                        backgroundColor: [
+                            '#f59e0b', '#3b82f6', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4', '#64748b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // 4. Populate Reports Logs Table
+            const tbody = document.getElementById('reports-table-body');
+            tbody.innerHTML = '';
+
+            reports.forEach(rep => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                
+                // Format Date / Time
+                const dateObj = new Date(rep.timestamp);
+                const timeStr = dateObj.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
+                
+                // Patient breakdown badge generator
+                let patientsSummaryHtml = '';
+                if(rep.patients && rep.patients.length > 0) {
+                    patientsSummaryHtml = rep.patients.map(p => {
+                        const genderBadgeClass = p.gender === 'ชาย' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-pink-50 text-pink-700 border-pink-200';
+                        return `
+                            <span class="inline-flex items-center gap-1 border px-2 py-0.5 rounded-md text-xs font-semibold m-0.5">
+                                <span class="w-1.5 h-1.5 rounded-full ${p.gender==='ชาย'?'bg-blue-500':'bg-pink-500'}"></span>
+                                ${p.gender}: ${p.symptom}
+                            </span>
+                        `;
+                    }).join(' ');
+                } else {
+                    patientsSummaryHtml = '<span class="text-xs text-gray-400">ไม่ได้ลงประวัติบุคคล</span>';
+                }
+
+                // Image indicators
+                let imageCellHtml = '<span class="text-gray-300">-</span>';
+                if(rep.images && rep.images.length > 0) {
+                    imageCellHtml = `
+                        <button onclick="viewReportImages('${rep.id}')" class="text-emerald-600 hover:text-emerald-800 flex items-center justify-center gap-1 mx-auto bg-emerald-50 px-2 py-1 rounded-md text-xs font-semibold">
+                            <i class="fa-solid fa-image text-sm"></i> (${rep.images.length})
+                        </button>
+                    `;
+                }
+
+                tr.innerHTML = `
+                    <td class="p-4 font-semibold text-gray-900 whitespace-nowrap">
+                        <div class="flex flex-col">
+                            <span>${timeStr}</span>
+                            <span class="text-[10px] text-gray-400 font-normal">18 มิ.ย. 2569</span>
+                        </div>
+                    </td>
+                    <td class="p-4 font-medium text-gray-800 max-w-[200px] truncate" title="${rep.location}">
+                        ${rep.location}
+                    </td>
+                    <td class="p-4 text-center font-bold text-gray-900">${rep.totalPatients}</td>
+                    <td class="p-4 text-center">
+                        <span class="${rep.referredPatients > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-600'} text-xs font-bold px-2.5 py-1 rounded-full">
+                            ${rep.referredPatients}
+                        </span>
+                    </td>
+                    <td class="p-4 max-w-sm">
+                        <div class="flex flex-wrap max-h-24 overflow-y-auto">
+                            ${patientsSummaryHtml}
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <div class="text-xs">
+                            <div class="font-semibold text-gray-800">${rep.reporterName}</div>
+                            <div class="text-gray-500">${rep.reporterAgency}</div>
+                        </div>
+                    </td>
+                    <td class="p-4 text-center">${imageCellHtml}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // View Attached Images Modal
+        function viewReportImages(reportId) {
+            const rep = reports.find(r => r.id === reportId);
+            if (!rep || !rep.images || rep.images.length === 0) return;
+
+            const modal = document.getElementById('details-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            let imagesHtml = '';
+            rep.images.forEach((img, index) => {
+                imagesHtml += `
+                    <div class="border rounded-xl overflow-hidden shadow-sm bg-slate-50">
+                        <div class="bg-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 flex justify-between">
+                            <span>รูปภาพการปฏิบัติหน้าที่ภาพที่ ${index+1}</span>
+                            <span>จุด: ${rep.location}</span>
+                        </div>
+                        <img src="${img}" class="w-full h-auto max-h-[400px] object-contain block mx-auto">
+                    </div>
+                `;
+            });
+
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-bold text-gray-800">ผู้รายงาน: <span class="text-emerald-700 font-semibold">${rep.reporterName}</span></h4>
+                        <p class="text-xs text-gray-500 mt-1">ส่งจาก: ${rep.location}</p>
+                    </div>
+                    <div class="space-y-4">
+                        ${imagesHtml}
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('details-modal').classList.add('hidden');
+        }
+
+        // Alert message toaster helper
+        function showAlert(type, text) {
+            const box = document.getElementById('alert-box');
+            const icon = document.getElementById('alert-icon');
+            const textBox = document.getElementById('alert-text');
+
+            box.className = "mb-6 p-4 rounded-lg flex items-center justify-between transition-all duration-300";
+            
+            if(type === 'success') {
+                box.classList.add('bg-emerald-50', 'text-emerald-800', 'border', 'border-emerald-200');
+                icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600"></i>';
+            } else if(type === 'danger') {
+                box.classList.add('bg-red-50', 'text-red-800', 'border', 'border-red-200');
+                icon.innerHTML = '<i class="fa-solid fa-circle-exclamation text-red-600"></i>';
+            }
+
+            textBox.innerText = text;
+            box.classList.remove('hidden');
+
+            // Auto hide after 6 seconds
+            setTimeout(() => {
+                closeAlert();
+            }, 6000);
+        }
+
+        function closeAlert() {
+            document.getElementById('alert-box').classList.add('hidden');
+        }
+
+        // Simulated demo data generation to make things look beautiful on first visit
+        function loadDemoData() {
+            reports = [
+                {
+                    id: 'REP-001',
+                    timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 mins ago
+                    location: "หน้าเทศบาลเมืองกำแพงเพชร",
+                    totalPatients: 4,
+                    referredPatients: 1,
+                    patients: [
+                        { gender: "ชาย", symptom: "ตะคริวที่น่องขวา" },
+                        { gender: "หญิง", symptom: "หน้ามืดเวียนศีรษะ" },
+                        { gender: "ชาย", symptom: "แผลถลอกเข่าขวาหกล้ม" },
+                        { gender: "ชาย", symptom: "แน่นหน้าอกเหนื่อยหอบมาก" }
+                    ],
+                    reporterName: "นพ.เอกภพ แข็งแรง",
+                    reporterAgency: "รพ.กำแพงเพชร",
+                    images: []
+                },
+                {
+                    id: 'REP-002',
+                    timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1 hr ago
+                    location: "จุดกลับตัวนักวิ่ง เลย รพ.สต.หนองกรด",
+                    totalPatients: 3,
+                    referredPatients: 0,
+                    patients: [
+                        { gender: "หญิง", symptom: "ตะคริวตึงกล้ามเนื้อต้นขา" },
+                        { gender: "ชาย", symptom: "แผลถลอกข้อนิ้วมือ" },
+                        { gender: "หญิง", symptom: "หน้ามืดวิงเวียนแดดจัด" }
+                    ],
+                    reporterName: "พว.สมหญิง วงศ์กู้ชีพ",
+                    reporterAgency: "รพ.สต.หนองกรด",
+                    images: []
+                },
+                {
+                    id: 'REP-003',
+                    timestamp: new Date(Date.now() - 90 * 60 * 1000).toISOString(), // 1.5 hr ago
+                    location: "วัดริมทาง อุทยานฯ",
+                    totalPatients: 2,
+                    referredPatients: 0,
+                    patients: [
+                        { gender: "ชาย", symptom: "ตะคริวที่น่องซ้าย" },
+                        { gender: "ชาย", symptom: "ปวดตึงข้อเท้าส้นเท้า" }
+                    ],
+                    reporterName: "นายชูศักดิ์ ฉุกเฉิน",
+                    reporterAgency: "กู้ภัยสว่างกำแพงเพชร",
+                    images: []
+                }
+            ];
+            localStorage.setItem('km_marathon_reports', JSON.stringify(reports));
+        }
+
+        function mockInitialData() {
+            localStorage.removeItem('km_marathon_reports');
+            loadDemoData();
+            updateDashboard();
+            showAlert('success', 'โหลดข้อมูลจำลองสำเร็จเรียบร้อยแล้ว!');
+        }
+
+        // Purge memory
+        function clearAllData() {
+            if (confirm("คุณแน่ใจหรือไม่ที่จะทำการล้างข้อมูลการรายงานทั้งหมดในเบราว์เซอร์นี้?")) {
+                reports = [];
+                localStorage.removeItem('km_marathon_reports');
+                updateDashboard();
+                showAlert('danger', 'ล้างข้อมูลบันทึกทั้งหมดเสร็จสิ้น');
+            }
+        }
+    </script>
+</body>
+</html>
